@@ -1,3 +1,7 @@
+# AUTHOR      : MOHAMMAD M. GHASSEMI <ghassemi@mit.edu>
+# DATE        : FEB 9, 2019
+# DESCRIPTION : Collects data from the Harvard Library API. See README.md for more detail. 
+
 # IMPORT THE REQUIRED LIBRARIES
 
 from six.moves import urllib
