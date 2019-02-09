@@ -38,7 +38,7 @@ The terms are based on the raw content that is returned from the harvard library
 
 Inspecting the raw JSON, you will notice that under "items"-->"mods" there is a subfield called "titleInfo" which itself contains a subfeild called "title". The way to access this title, would be to add titleInfo.title to the list of 'terms' in the python script.
 
-When the API returns more than one result for a given field request (e.g. subject.topic), those values will be contatenated and separted with a "[\*]". In the case of the earlier example, the code would return:
+When the API returns more than one result for a given field request (e.g. name.namePart), those values will be contatenated and separted with a "[\*]". In the case of the earlier example, the code would return:
 
         [*] Perumal, Santhanam. [*] Pachiappan, Perumal. [*] A.R., Thirunavukkarasu.","[*] Fish [*] Life sciences [*]Freshwater & Marine Ecology [*] Fish & Wildlife Biology & Management [*] Marine sciences [*] Aquatic ecology [*] Life Sciences [*] Freshwater [*] Marine & Freshwater Sciences [*] Oceanography [*] Wildlife","[*] eng [*] English"
 
