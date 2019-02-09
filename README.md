@@ -25,12 +25,12 @@ Or, to get the 5th record for the key term 'dog', run:
 The code will return the fields specified in the 'terms' variable of getHarvardLibraryData.py (see line 175-181) in comma seperated variable format (CSV). In this initial commit of the software, the fields are: 
 
         terms       = ['titleInfo.title',
-		          'name.namePart', 
-			  'subject.topic',
-			  'language.languageTerm',
-			  'physicalDescription.extent', 
-			  'abstract'
-		       ]
+		           'name.namePart', 
+			   'subject.topic',
+			   'language.languageTerm',
+			   'physicalDescription.extent', 
+			   'abstract'
+		           ]
 
 The terms are based on the raw content that is returned from the harvard library API. For instance https://api.lib.harvard.edu/v2/items.json?q=fish&start=1&limit=1 returns a JSON formatted record from the API when searching for the term 'fish'. When processed by our program, that JSON data is converted into something like this:
 
