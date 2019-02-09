@@ -21,7 +21,26 @@ Or, to get the 5th record for the key term 'dog', run:
         python getdata.py 'dog' 4
 
 
-### What is returned, and how to change what is returned?
-The code will return the fields specified in the 'terms' variable of getHarvardLibraryData.py (see line 175). The terms are based on the raw return from the harvard library API. For instance https://api.lib.harvard.edu/v2/items.json?q=fish&start=1&limit=1 returns a JSON formatted record from the API. Notice that under "items"-->"mods" there is a subfield called "titleInfo" which itself contains a subfeild called "title". The way to access this title, would be to add titleInfo.title to the list of 'terms' in the python script.
+### What is returned, and how to chage it?
+The code will return the fields specified in the 'terms' variable of getHarvardLibraryData.py (see line 175-181) in comma seperated variable format (CSV). In this initial commit of the software, the fields are: 
+
+        terms       = ['titleInfo.title',
+		       'name.namePart', 
+			'subject.topic',
+			'language.languageTerm',
+			'physicalDescription.extent', 
+			'abstract'
+		       ]
+
+The terms are based on the raw content that is returned from the harvard library API. For instance https://api.lib.harvard.edu/v2/items.json?q=fish&start=1&limit=1 returns a JSON formatted record from the API when searching for the term 'fish'. 
+
+Inspecting the raw JSON, you will notice that under "items"-->"mods" there is a subfield called "titleInfo" which itself contains a subfeild called "title". The way to access this title, would be to add titleInfo.title to the list of 'terms' in the python script.
+
+When the API returns more than one result for a given field request (e.g. subject.topic), those values will be contatenated and separted with a "[\*]". In the case of the earlier example, the code would return:
+
+        [*] Perumal, Santhanam. [*] Pachiappan, Perumal. [*] A.R., Thirunavukkarasu.","[*] Fish [*] Life sciences [*]Freshwater & Marine Ecology [*] Fish & Wildlife Biology & Management [*] Marine sciences [*] Aquatic ecology [*] Life Sciences [*] Freshwater [*] Marine & Freshwater Sciences [*] Oceanography [*] Wildlife","[*] eng [*] English"
+
+### Questions?
+Please email me if you have questions about this code, or notice any mistakes.
 
 
