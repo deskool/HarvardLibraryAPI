@@ -1,0 +1,5 @@
+xmltodict
+six
+requests
+numpy
+
