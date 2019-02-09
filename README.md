@@ -14,11 +14,11 @@ To install the required packages for the software, please navigate to the root d
 ### Run the Data Extraction
 The python script takes two arguments: (1) search term, (2) result number. For example, to get the first result for the key term 'cat', run:
         
-        python getdata.py 'cat' 0
+        python getHarvardLibraryData.py 'cat' 0
 
 Or, to get the 5th record for the key term 'dog', run:
         
-        python getdata.py 'dog' 4
+        python getHarvardLibraryData.py 'dog' 4
 
 
 ### What is returned, and how to chage it?
