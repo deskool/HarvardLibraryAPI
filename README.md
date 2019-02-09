@@ -1,7 +1,7 @@
 # Harvard Library API
 
 ### About The Software
-This software is used to collect structured data from the Harvard Library API (https://wiki.harvard.edu/confluence/display/LibraryStaffDoc/LibraryCloud+Item+API). The scripts in this directory use Python3, and bash. 
+This software is used to collect structured data from the Harvard Library API (https://wiki.harvard.edu/confluence/display/LibraryStaffDoc/LibraryCloud+Item+API). The software is written in python3, and assumes that you have access to a Unix based environment.
 
 PLEASE NOTE: If you have both Python2, and Python3 installed on your machine, you may need to modify some of the commands listed below (e.g. pip --> pip3).
 
