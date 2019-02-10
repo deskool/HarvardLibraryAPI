@@ -23,7 +23,7 @@ Or, to get the 5th record for the key term 'dog', run:
         python getHarvardLibraryData.py 'dog' 4
 
 
-### What is returned, and how to change it?
+### What is Returned, and How to Change it?
 The code will return the fields specified in the 'terms' variable of getHarvardLibraryData.py (see line 175-181) in comma seperated variable format (CSV). In this initial commit of the software, the fields are: 
 
         terms       = ['titleInfo.title',
