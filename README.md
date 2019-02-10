@@ -1,4 +1,4 @@
-# Harvard Library API
+# Harvard Library APyI
 
 ### About The Software
 This software is used to collect structured data from the Harvard Library API (https://wiki.harvard.edu/confluence/display/LibraryStaffDoc/LibraryCloud+Item+API). The software is written in python3, and assumes that you have access to a Unix based environment.
