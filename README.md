@@ -3,7 +3,7 @@
 ### About The Software
 This software is used to collect structured data from the Harvard Library API (https://wiki.harvard.edu/confluence/display/LibraryStaffDoc/LibraryCloud+Item+API). The software is written in python3, and assumes that you have access to a Unix based environment.
 
-PLEASE NOTE: If you have both Python2, and Python3 installed on your machine, you may need to modify some of the commands listed below (e.g. pip --> pip3).
+_PLEASE NOTE: If you have both Python2, and Python3 installed on your machine, you may need to modify some of the commands listed below (e.g. pip --> pip3)._
 
 ### Installation Instruction
 To install the required packages for the software, please navigate to the root directory of the software (i.e. where you find getdata.py) and run the following commands:
