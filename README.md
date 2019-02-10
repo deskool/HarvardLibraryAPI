@@ -42,7 +42,7 @@ Inspecting the raw JSON, you will notice that under "items"-->"mods" there is a 
 
 When the API returns more than one result for a given field request (e.g. name.namePart), those values will be contatenated and separted with a "[\*]". In the case of the earlier example, the code would return:
 
-        [*] Perumal, Santhanam. [*] Pachiappan, Perumal. [*] A.R., Thirunavukkarasu."
+        "[*] Perumal, Santhanam. [*] Pachiappan, Perumal. [*] A.R., Thirunavukkarasu."
 
 ### Questions?
 Please email me if you have questions about this code, or notice any mistakes.
