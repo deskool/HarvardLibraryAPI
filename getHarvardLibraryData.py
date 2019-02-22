@@ -1,10 +1,7 @@
-# AUTHOR      : MOHAMMAD M. GHASSEMI <ghassemi@mit.edu>
-# DATE        : FEB 9, 2019
-# DESCRIPTION : Collects data from the Harvard Library API. See README.md for more detail. 
-
 # IMPORT THE REQUIRED LIBRARIES
 
 from six.moves import urllib
+
 import xml.etree.ElementTree as ET
 import xmltodict
 import json
@@ -12,7 +9,6 @@ import csv
 import collections
 import time
 import requests
-from importlib import reload
 import numpy as np
 import ast
 import sys
@@ -32,7 +28,7 @@ def get_json_from_url(url, is_type='json'):
 	reload(requests)
 	
 	# MAKE A REQUEST
-	r   = requests.get(url, stream=False)
+	r       = requests.get(url, stream=False)
 	raw = r.content
 	
 	# EXTRACT THE JSON
@@ -43,8 +39,7 @@ def get_json_from_url(url, is_type='json'):
 											    		  attr_prefix='', 
 											    		  cdata_key='')))
 	elif is_type == 'json':
-		raw = raw.replace(b'null',b'"null"')
-		return eval(raw)
+		return eval(raw.replace('null','"null"'))
 
 # CONVERTS A DICT FULL OF UNICODE INTO STRING  ---------------------------------------------------------------------------------------
 def convert(data):
@@ -172,23 +167,25 @@ def merge_clashing_key_vals_into_dict(key,value):
 				new_data[key[i]] = value[i]
 	return new_data
 
-
 #########################################################################################################################################
 # MAIN
 #########################################################################################################################################
-terms       = ['titleInfo.title',
-				 'name.namePart', 
-				 'subject.topic',
-				 'language.languageTerm',
-				 'physicalDescription.extent', 
-				 'abstract'
-			  ]
+terms       = ['titleInfo.title', 'subject.topic', 'language.languageTerm', 'physicalDescription.extent']
 search_term = sys.argv[1]
+output_file = search_term + '.txt'
 start       = int(sys.argv[2])
 end         = start + 1
 limit 	    = 1 
 
 # GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
+
+#no start term specified
+if (start == -1):
+    start = 0
+    end = start + 1
+    limit = 2
+    # limit = 1000000000
+
 url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
 raw_json    = get_json_from_url(url,'json')
 data        = json2csv(raw_json['items']['mods'])
@@ -196,18 +193,27 @@ key,value   = assign_key_numbers_to_value(data)
 key,value   = remove_redundent_keyvals(key,value)
 data        = merge_clashing_key_vals_into_dict(key,value)
 
-# WRITE TO HEADER  ----------------------------------------------------------------------------------------------------------------------
-if start == 0:
-	header = ''
-	for i in range(len(terms)):
-		header += '"' + terms[i] + '",'
-	print(header[:-1])
 
+
+    
+
+# WRITE TO HEADER  ----------------------------------------------------------------------------------------------------------------------
+content = ''
+#if start == 0:
+header = ''
+for i in range(len(terms)):
+ header += '"' + terms[i] + '",'
+print(header[:-1])
+content += header[:-1]
+ 
+ 
 row = ''
 for i in range(len(terms)):
-	row += '"' + data[terms[i]] + '",'
+ row += '"' + data[terms[i]] + '",'
 print(row[:-1])
+content = row[:-1]
 
 # WRITE DATA  ---------------------------------------------------------------------------------------------------------------------------
-
-
+save_file = open(output_file, 'w') #write to output_file (named by search term)
+save_file.write(content)
+save_file.close()
