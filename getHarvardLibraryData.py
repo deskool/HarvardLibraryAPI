@@ -12,7 +12,7 @@ import csv
 import collections
 import time
 import requests
-from importlib import reload
+# from importlib import reload
 import numpy as np
 import ast
 import sys
@@ -172,42 +172,64 @@ def merge_clashing_key_vals_into_dict(key,value):
 				new_data[key[i]] = value[i]
 	return new_data
 
-
 #########################################################################################################################################
 # MAIN
 #########################################################################################################################################
-terms       = ['titleInfo.title',
-				 'name.namePart', 
-				 'subject.topic',
-				 'language.languageTerm',
-				 'physicalDescription.extent', 
-				 'abstract'
-			  ]
+terms       = ['titleInfo.title', 'subject.topic', 'language.languageTerm', 'physicalDescription.extent']
 search_term = sys.argv[1]
+output_file = search_term + '.txt'
 start       = int(sys.argv[2])
 end         = start + 1
 limit 	    = 1 
 
+#no start term specified
+if (start == -1):
+    start = 0
+    end = start + 1
+    limit = 10
+    # limit = 1000000000
+
 # GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
 url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
 raw_json    = get_json_from_url(url,'json')
-data        = json2csv(raw_json['items']['mods'])
-key,value   = assign_key_numbers_to_value(data)
-key,value   = remove_redundent_keyvals(key,value)
-data        = merge_clashing_key_vals_into_dict(key,value)
+# data        = json2csv(raw_json['items']['mods'])
+# key,value   = assign_key_numbers_to_value(data)
+# key,value   = remove_redundent_keyvals(key,value)
+# data        = merge_clashing_key_vals_into_dict(key,value)
 
+
+
+data = {}
+for i in range (limit): 
+    datai = json2csv(raw_json['items']['mods'][i])
+    data[i] = datai
+
+for i in range (limit):  
+    key,value   = assign_key_numbers_to_value(data[i])
+    key,value   = remove_redundent_keyvals(key,value)
+    data[i]     = merge_clashing_key_vals_into_dict(key,value)
+    
 # WRITE TO HEADER  ----------------------------------------------------------------------------------------------------------------------
-if start == 0:
-	header = ''
-	for i in range(len(terms)):
-		header += '"' + terms[i] + '",'
-	print(header[:-1])
 
-row = ''
+content = ''
+# if start == 0:
+header = ''
 for i in range(len(terms)):
-	row += '"' + data[terms[i]] + '",'
-print(row[:-1])
+    header += '"' + terms[i] + '",'
+content += header[:-1]
+ 
+ 
+row = ''
+for i in range(limit):
+    for j in range(len(terms)):
+        row += '"' + data[i][terms[j]] + '",'
+content = row[:-1]
+
+print(content)
 
 # WRITE DATA  ---------------------------------------------------------------------------------------------------------------------------
 
+save_file = open(output_file, 'w') #write to output_file (named by search term)
+save_file.write(content)
+save_file.close()
 
