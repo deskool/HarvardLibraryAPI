@@ -18,6 +18,8 @@ import ast
 import sys
 import os.path
 
+TIMEOUT = 3
+
 #########################################################################################################################################
 # DOCUMENTATION
 #########################################################################################################################################
@@ -32,18 +34,24 @@ def get_json_from_url(url, is_type='json'):
 	reload(requests)
 	
 	# MAKE A REQUEST
-	r   = requests.get(url, stream=False)
+	try:
+	   r   = requests.get(url, stream=False, timeout=TIMEOUT)
+	except(requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
+	   return None
+	
 	raw = r.content
 	
 	# EXTRACT THE JSON
 	if is_type == 'xml':
-		return json.loads(json.dumps(xmltodict.parse(raw, process_namespaces=True, 
-														  namespaces={'http://www.loc.gov/mods/v3':None,
-											    				    	 'http://api.lib.harvard.edu/v2/item':None}, 
-											    		  attr_prefix='', 
-											    		  cdata_key='')))
+	   return json.loads(json.dumps(xmltodict.parse(raw, 
+		                                             process_namespaces = True, 
+							     namespaces = {'http://www.loc.gov/mods/v3':None,
+							                   'http://api.lib.harvard.edu/v2/item':None}, 
+							     attr_prefix = '', 
+							     cdata_key = '')))
 	elif is_type == 'json':
 		raw = raw.replace(b'null',b'"null"')
+		
 		return eval(raw)
 
 # CONVERTS A DICT FULL OF UNICODE INTO STRING  ---------------------------------------------------------------------------------------
@@ -175,59 +183,72 @@ def merge_clashing_key_vals_into_dict(key,value):
 #########################################################################################################################################
 # MAIN
 #########################################################################################################################################
-terms       = ['titleInfo.title', 'subject.topic', 'language.languageTerm', 'physicalDescription.extent']
+terms       = ['titleInfo.title', 'subject.topic', 'language.languageTerm'] #, 'physicalDescription.extent'
 search_term = sys.argv[1]
-output_file = search_term + '.txt'
-start       = int(sys.argv[2])
-end         = start + 1
-limit 	    = 1 
-
-#no start term specified
-if (start == -1):
-    start = 0
-    end = start + 1
-    limit = 100000000
+output_file = search_term + '.csv'
+start       = 0
+limit 	    = 250
     
-
 # GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
-url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
-raw_json    = get_json_from_url(url,'json')
 
-mods = raw_json['items']['mods']
-max = len(mods)
+i = 0
 
-data = {}
-for i in range (max): 
-    datai = json2csv(raw_json['items']['mods'][i])
-    data[i] = datai
+while (1):  
 
-for i in range (max):  
-    key,value   = assign_key_numbers_to_value(data[i])
-    key,value   = remove_redundent_keyvals(key,value)
-    data[i]     = merge_clashing_key_vals_into_dict(key,value)
+    content = ''
     
-# WRITE TO HEADER  ----------------------------------------------------------------------------------------------------------------------
+    # The actual API request, returned as JSON
+    url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
+    raw_json    = get_json_from_url(url,'json')
+    
+    
+    if raw_json == None or raw_json['items']== 'null':
+        print('Search complete')
+        break
+    
+    # counts the number of returned records    
+    mods = raw_json['items']['mods']
+    max = len(mods)
+    
+    #Process/clean up the data
+    data = {}
+    for i in range (max): 
+        datai = json2csv(raw_json['items']['mods'][i])
+        data[i] = datai
+    
+    for i in range (max):  
+        key,value   = assign_key_numbers_to_value(data[i])
+        key,value   = remove_redundent_keyvals(key,value)
+        data[i]     = merge_clashing_key_vals_into_dict(key,value)
 
-content = ''
-# if start == 0:
-header = ''
-for i in range(len(terms)):
-    header += '"' + terms[i] + '",'
-content += header[:-1]
- 
- 
-row = ''
-for i in range(max):
-    for j in range(len(terms)):
-        row += '"' + data[i][terms[j]] + '",'
-content = row[:-1]
 
-print(content)
+    # Write the header to the CSV file
+    if start == 0:
+        try:
+            os.remove(output_file)
+        except:
+            print('file did not exist')
+        
+        header = ''
+        for i in range(len(terms)):
+            header += '"' + terms[i] + '",'
+        content += header[:-1] + '\n'
+
+    # Writing the data to the CSV file
+    for i in range(max):
+        row = ''
+        for j in range(len(terms)):
+            row += '"' + data[i][terms[j]] + '",'
+        content += row[:-1] + '\n'
 
 
-# WRITE DATA  ---------------------------------------------------------------------------------------------------------------------------
+    save_file = open(output_file, 'a') #write to output_file (named by search term)
+    save_file.write(content)
+    save_file.close()
 
-save_file = open(output_file, 'w') #write to output_file (named by search term)
-save_file.write(content)
-save_file.close()
-
+    start = start + 250
+    i = i + 1 
+    # if (i == 2):
+    #     break
+    print(i)
+    
