@@ -50,8 +50,18 @@ def get_json_from_url(url, is_type='json'):
 							     attr_prefix = '', 
 							     cdata_key = '')))
 	elif is_type == 'json':
-		raw = raw.replace(b'null',b'"null"')
+		raw = raw.replace(b': null',b': "null"')
+		raw = raw.replace(b':null',b':"null"')
 		
+		raw = raw.replace(b', null',b', "null"')
+		raw = raw.replace(b',null',b',"null"')
+		
+		raw = raw.replace(b'[ null',b'[ "null"')
+		raw = raw.replace(b'[null',b'["null"')
+		
+		raw = raw.replace(b'{ null',b'{ "null"')
+		raw = raw.replace(b'{null',b'{"null"')
+
 		return eval(raw)
 
 # CONVERTS A DICT FULL OF UNICODE INTO STRING  ---------------------------------------------------------------------------------------
@@ -98,30 +108,31 @@ def json2csv(my_dict, last_keys='',key_list=[], value_list=[]):
 	return dict(zip(key_list, value_list))
 
 
-def assign_key_numbers_to_value(data):
-	r_key,r_value = [], []
-	for key, value in data.items():
-		new_key, new_value = key, value		
-		if '_' in key:
-			where = [pos for pos, char in enumerate(key) if char == '_']
-			starts,ends = where[0:len(where):2],where[1:len(where):2]
-			en_data = ''
-			for i in range(len(starts)):
-				ii      = (len(starts)-1) - i
-				en_data += key[starts[ii]+1:ends[ii]] + '.' 
-				new_key = key[:starts[ii]] + key[ends[ii]+1:] 
-			en_data    = '[' + en_data[:-1] + '] '
-			new_value  = en_data + new_value
-
-		r_key      = r_key + [new_key]
-		r_value    = r_value + [new_value]
-	return r_key, r_value
-
+# def assign_key_numbers_to_value(data):
+# 	r_key,r_value = [], []
+# 	for key, value in data.items():
+# 		new_key, new_value = key, value		
+# 		if '_' in key:
+# 			where = [pos for pos, char in enumerate(key) if char == '_']
+# 			starts,ends = where[0:len(where):2],where[1:len(where):2]
+# 			en_data = ''
+# 			for i in range(len(starts)):
+# 				ii      = (len(starts)-1) - i
+# 				en_data += key[starts[ii]+1:ends[ii]] + '.' 
+# 				new_key = key[:starts[ii]] + key[ends[ii]+1:] 
+# 			en_data    = '[' + en_data[:-1] + '] '
+# 			new_value  = en_data + new_value
+# 
+# 		r_key      = r_key + [new_key]
+# 		r_value    = r_value + [new_value]
+# 	return r_key, r_value
+# 
 
 #TODO - add #text, add @authority.
 def assign_key_numbers_to_value(data):
 	r_key,r_value = [], []
 	for key, value in data.items():
+	        # print(key)
 		new_key, new_value = key, value		
 
 		if '_' in key:
@@ -183,7 +194,7 @@ def merge_clashing_key_vals_into_dict(key,value):
 #########################################################################################################################################
 # MAIN
 #########################################################################################################################################
-terms       = ['titleInfo.title', 'subject.topic', 'language.languageTerm'] #, 'physicalDescription.extent'
+terms       = ['titleInfo.title', 'subject.topic','language.languageTerm']
 search_term = sys.argv[1]
 output_file = search_term + '.csv'
 start       = 0
@@ -193,16 +204,19 @@ limit 	    = 250
 
 i = 0
 
+set_of_keys = []
+counting_keys = {}
+
 while (1):  
 
     content = ''
     
     # The actual API request, returned as JSON
     url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
+    
     raw_json    = get_json_from_url(url,'json')
     
-    
-    if raw_json == None or raw_json['items']== 'null':
+    if raw_json == None or raw_json['items'] == 'null':
         print('Search complete')
         break
     
@@ -219,11 +233,26 @@ while (1):
     for i in range (max):  
         key,value   = assign_key_numbers_to_value(data[i])
         key,value   = remove_redundent_keyvals(key,value)
+        
+        
+        for j in range(len(key)):
+            
+        # counts number of times term shows up with search term
+            if (key[j] in counting_keys):
+                counting_keys[key[j]] += 1
+            else: 
+                counting_keys[key[j]] = 1
+            
         data[i]     = merge_clashing_key_vals_into_dict(key,value)
-
+        
+        # Update the set of unique keys
+        set_of_keys += data[i].keys()
+        set_of_keys = list(set(set_of_keys))
 
     # Write the header to the CSV file
     if start == 0:
+        
+        # replace CSV file upon new search
         try:
             os.remove(output_file)
         except:
@@ -241,14 +270,53 @@ while (1):
             row += '"' + data[i][terms[j]] + '",'
         content += row[:-1] + '\n'
 
-
-    save_file = open(output_file, 'a') #write to output_file (named by search term)
+    #write to output_file (named by search term)
+    save_file = open(output_file, 'a') 
     save_file.write(content)
     save_file.close()
 
-    start = start + 250
+    start = start + limit
     i = i + 1 
-    # if (i == 2):
-    #     break
-    print(i)
+
+    unique_keys_file = open('unique_' + search_term + '_keys.csv', 'w') 
+    unique_keys_file.write('\n'.join(set_of_keys))
+    unique_keys_file.close()  
+    
+    counting_keys_file = open('counting_' + search_term + '_keys.csv', 'w') 
+    counting_keys_file.write('' + counting_keys)
+    counting_keys_file.close()
+    
+    ###################  SEPARATE FILE ###################
+    
+    # # find the total number of keys for percentages
+    # total_num_keys = 0
+    # for key, value in counting_keys.items():
+    #     total_num_keys += value
+        
+    # common_keys = []
+    # uncommon_keys = []
+    # 
+    # # if term shows up 80% or more add to file
+    # for key, value in counting_keys.items():
+    #     if (value/total_num_keys >= .8):
+    #         common_keys.append(key)
+    #     else:
+    #         uncommon_keys.append(key)
+    #         
+    # 
+    # common_keys = list(set(common_keys))
+    # uncommon_keys = list(set(uncommon_keys))
+    # 
+    #         
+    #          
+    # common_keys_file = open('common_' + search_term + '_keys.csv', 'w') 
+    # common_keys_file.write('\n'.join(common_keys))
+    # common_keys_file.close()  
+    # 
+    # uncommon_keys_file = open('uncommon_' + search_term + '_keys.csv', 'w') 
+    # uncommon_keys_file.write('\n'.join(uncommon_keys))
+    # uncommon_keys_file.close()  
+    #     
+    #     
+    
     
