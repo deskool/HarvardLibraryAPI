@@ -186,25 +186,22 @@ limit 	    = 1
 if (start == -1):
     start = 0
     end = start + 1
-    limit = 10
-    # limit = 1000000000
+    limit = 100000000
+    
 
 # GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
 url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
 raw_json    = get_json_from_url(url,'json')
-# data        = json2csv(raw_json['items']['mods'])
-# key,value   = assign_key_numbers_to_value(data)
-# key,value   = remove_redundent_keyvals(key,value)
-# data        = merge_clashing_key_vals_into_dict(key,value)
 
-
+mods = raw_json['items']['mods']
+max = len(mods)
 
 data = {}
-for i in range (limit): 
+for i in range (max): 
     datai = json2csv(raw_json['items']['mods'][i])
     data[i] = datai
 
-for i in range (limit):  
+for i in range (max):  
     key,value   = assign_key_numbers_to_value(data[i])
     key,value   = remove_redundent_keyvals(key,value)
     data[i]     = merge_clashing_key_vals_into_dict(key,value)
@@ -220,12 +217,13 @@ content += header[:-1]
  
  
 row = ''
-for i in range(limit):
+for i in range(max):
     for j in range(len(terms)):
         row += '"' + data[i][terms[j]] + '",'
 content = row[:-1]
 
 print(content)
+
 
 # WRITE DATA  ---------------------------------------------------------------------------------------------------------------------------
 
