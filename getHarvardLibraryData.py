@@ -107,32 +107,10 @@ def json2csv(my_dict, last_keys='',key_list=[], value_list=[]):
 				value_list.append(my_dict[i])
 	return dict(zip(key_list, value_list))
 
-
-# def assign_key_numbers_to_value(data):
-# 	r_key,r_value = [], []
-# 	for key, value in data.items():
-# 		new_key, new_value = key, value		
-# 		if '_' in key:
-# 			where = [pos for pos, char in enumerate(key) if char == '_']
-# 			starts,ends = where[0:len(where):2],where[1:len(where):2]
-# 			en_data = ''
-# 			for i in range(len(starts)):
-# 				ii      = (len(starts)-1) - i
-# 				en_data += key[starts[ii]+1:ends[ii]] + '.' 
-# 				new_key = key[:starts[ii]] + key[ends[ii]+1:] 
-# 			en_data    = '[' + en_data[:-1] + '] '
-# 			new_value  = en_data + new_value
-# 
-# 		r_key      = r_key + [new_key]
-# 		r_value    = r_value + [new_value]
-# 	return r_key, r_value
-# 
-
 #TODO - add #text, add @authority.
 def assign_key_numbers_to_value(data):
 	r_key,r_value = [], []
 	for key, value in data.items():
-	        # print(key)
 		new_key, new_value = key, value		
 
 		if '_' in key:
@@ -194,18 +172,27 @@ def merge_clashing_key_vals_into_dict(key,value):
 #########################################################################################################################################
 # MAIN
 #########################################################################################################################################
-terms       = ['titleInfo.title', 'subject.topic','language.languageTerm']
+terms       = ['titleInfo.title']
 search_term = sys.argv[1]
+
+# if user supplies optional argument, provide common terms file
+if len(sys.argv) >= 3:
+    terms = []
+    common_terms_file_name = sys.argv[2]
+    common_terms = open(common_terms_file_name, 'r')
+    
+    for common_term in common_terms:
+        terms.append(common_term)
+        
 output_file = search_term + '.csv'
 start       = 0
-limit 	    = 250
+limit 	    = 250   
     
 # GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
 
 i = 0
-
-set_of_keys = []
-counting_keys = {}
+count_keys = []
+num_records = 0
 
 while (1):  
 
@@ -232,22 +219,15 @@ while (1):
     
     for i in range (max):  
         key,value   = assign_key_numbers_to_value(data[i])
+        
+        num_records += 1
+        
+        # add the terms of each record to count_keys
+        for term in key:
+            count_keys.append(term)
+             
         key,value   = remove_redundent_keyvals(key,value)
-        
-        
-        for j in range(len(key)):
-            
-        # counts number of times term shows up with search term
-            if (key[j] in counting_keys):
-                counting_keys[key[j]] += 1
-            else: 
-                counting_keys[key[j]] = 1
-            
         data[i]     = merge_clashing_key_vals_into_dict(key,value)
-        
-        # Update the set of unique keys
-        set_of_keys += data[i].keys()
-        set_of_keys = list(set(set_of_keys))
 
     # Write the header to the CSV file
     if start == 0:
@@ -256,7 +236,7 @@ while (1):
         try:
             os.remove(output_file)
         except:
-            print('file did not exist')
+            print('file did not previously exist')
         
         header = ''
         for i in range(len(terms)):
@@ -267,7 +247,12 @@ while (1):
     for i in range(max):
         row = ''
         for j in range(len(terms)):
-            row += '"' + data[i][terms[j]] + '",'
+            term = terms[j][0:-1] #take off newline
+            if (term in data[i]):
+                row += '"' + data[i][term] + '",'
+            else:
+                row += '"",'
+                
         content += row[:-1] + '\n'
 
     #write to output_file (named by search term)
@@ -277,46 +262,14 @@ while (1):
 
     start = start + limit
     i = i + 1 
-
-    unique_keys_file = open('unique_' + search_term + '_keys.csv', 'w') 
-    unique_keys_file.write('\n'.join(set_of_keys))
-    unique_keys_file.close()  
     
-    counting_keys_file = open('counting_' + search_term + '_keys.csv', 'w') 
-    counting_keys_file.write('' + counting_keys)
-    counting_keys_file.close()
+    # write all keys to an output file (separate file for getting common keys)
+    count_keys_file = open(search_term + '_keys.csv', 'w') 
     
-    ###################  SEPARATE FILE ###################
+    for term in count_keys:
+        count_keys_file.write(str(term))
+        count_keys_file.write("\n")
     
-    # # find the total number of keys for percentages
-    # total_num_keys = 0
-    # for key, value in counting_keys.items():
-    #     total_num_keys += value
-        
-    # common_keys = []
-    # uncommon_keys = []
-    # 
-    # # if term shows up 80% or more add to file
-    # for key, value in counting_keys.items():
-    #     if (value/total_num_keys >= .8):
-    #         common_keys.append(key)
-    #     else:
-    #         uncommon_keys.append(key)
-    #         
-    # 
-    # common_keys = list(set(common_keys))
-    # uncommon_keys = list(set(uncommon_keys))
-    # 
-    #         
-    #          
-    # common_keys_file = open('common_' + search_term + '_keys.csv', 'w') 
-    # common_keys_file.write('\n'.join(common_keys))
-    # common_keys_file.close()  
-    # 
-    # uncommon_keys_file = open('uncommon_' + search_term + '_keys.csv', 'w') 
-    # uncommon_keys_file.write('\n'.join(uncommon_keys))
-    # uncommon_keys_file.close()  
-    #     
-    #     
+    count_keys_file.close()
     
-    
+    print('Number of Records: ' , num_records)
