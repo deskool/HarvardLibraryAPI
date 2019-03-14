@@ -18,6 +18,10 @@ import ast
 import sys
 import os.path
 
+import time
+start_time = time.time()
+
+
 TIMEOUT = 3
 
 #########################################################################################################################################
@@ -259,11 +263,18 @@ while (1):
     for i in range(max):
         row = ''
         for j in range(len(terms)):
-            term = terms[j][0:-1] #take off newline
+            # take off newline if reading from file
+            # last one doesn't have newline character
+            if ((len(sys.argv) >= 3) and (j != len(terms)-1)):
+                term = terms[j][0:-1]
+            else:
+                term = terms[j]
+                
             if (term in data[i]):
                 row += '"' + data[i][term] + '",'
             else:
-                row += '"",'
+                row += '"",' 
+                
                 
         content += row[:-1] + '\n'
 
@@ -274,59 +285,33 @@ while (1):
 
     start = start + limit
     i = i + 1 
+    print('num_records so far: ' + str(num_records))
     
-# write all keys to an output file (separate file for getting common keys)
-count_keys_file = open(search_term + '_keys.csv', 'w') 
-
-for term in count_keys:
-    count_keys_file.write(str(term))
-    count_keys_file.write("\n")
-
-count_keys_file.close()
-    
-print(num_records)
+print('number of records per second: ' + str(num_records/(time.time() - start_time)))
     
 ################################################################################
-
-input_file = search_term + '_keys.csv'
-
-csvfile = open(input_file, 'r')
-
 terms_dict = {}
 
 # count the number of times a search term shows up
-for term in csvfile:
+for term in count_keys:
     if term in terms_dict:
         terms_dict[term] += 1
     else: 
         terms_dict[term] = 1
 
 common_terms = []
-uncommon_terms = []
 
 # if term shows up less than 80% of time add to uncommon terms file
 for term in terms_dict:
-    if ((float(terms_dict[term]) / float(num_records)) < .8):
-        # add to the uncommon terms file
-        uncommon_terms.append(term) 
-        
-    else:
-        # add to the common terms file
+    if ((float(terms_dict[term]) / float(num_records)) >= .8):
         common_terms.append(term)
 
 # get the unique set of terms                
 common_terms = list(set(common_terms))
-uncommon_terms = list(set(uncommon_terms))
 
-# write terms to files 
-uncommon_terms_file = open('uncommon_' + search_term + '_keys.csv', 'w') 
-uncommon_terms_file.write(''.join(uncommon_terms))
-uncommon_terms_file.close()        
-        
+# write terms to a file
 common_terms_file = open('common_' + search_term + '_keys.csv', 'w') 
-common_terms_file.write(''.join(common_terms))
+common_terms_file.write('\n'.join(common_terms))
 common_terms_file.close()      
-
-csvfile.close()
 
 # run the file again with another input
