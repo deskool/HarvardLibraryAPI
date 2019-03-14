@@ -247,6 +247,7 @@ while (1):
     for i in range(max):
         row = ''
         for j in range(len(terms)):
+            print(terms[j])
             term = terms[j][0:-1] #take off newline
             if (term in data[i]):
                 row += '"' + data[i][term] + '",'
