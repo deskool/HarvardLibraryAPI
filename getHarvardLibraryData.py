@@ -1,10 +1,7 @@
-# AUTHOR      : MOHAMMAD M. GHASSEMI <ghassemi@mit.edu>
-# DATE        : FEB 9, 2019
-# DESCRIPTION : Collects data from the Harvard Library API. See README.md for more detail. 
-
 # IMPORT THE REQUIRED LIBRARIES
 
 from six.moves import urllib
+
 import xml.etree.ElementTree as ET
 import xmltodict
 import json
@@ -12,11 +9,18 @@ import csv
 import collections
 import time
 import requests
+<<<<<<< HEAD
 # from importlib import reload
+=======
+>>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 import numpy as np
 import ast
 import sys
 import os.path
+
+import time
+start_time = time.time()
+
 
 TIMEOUT = 3
 
@@ -34,35 +38,61 @@ def get_json_from_url(url, is_type='json'):
 	reload(requests)
 	
 	# MAKE A REQUEST
+<<<<<<< HEAD
 	try:
 	   r   = requests.get(url, stream=False, timeout=TIMEOUT)
 	except(requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
 	   return None
 	
+=======
+	r       = requests.get(url, stream=False)
+>>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 	raw = r.content
 	
 	# EXTRACT THE JSON
 	if is_type == 'xml':
+<<<<<<< HEAD
 	   return json.loads(json.dumps(xmltodict.parse(raw, 
 		                                             process_namespaces = True, 
 							     namespaces = {'http://www.loc.gov/mods/v3':None,
 							                   'http://api.lib.harvard.edu/v2/item':None}, 
 							     attr_prefix = '', 
 							     cdata_key = '')))
-	elif is_type == 'json':
-		raw = raw.replace(b': null',b': "null"')
-		raw = raw.replace(b':null',b':"null"')
-		
-		raw = raw.replace(b', null',b', "null"')
-		raw = raw.replace(b',null',b',"null"')
-		
-		raw = raw.replace(b'[ null',b'[ "null"')
-		raw = raw.replace(b'[null',b'["null"')
-		
-		raw = raw.replace(b'{ null',b'{ "null"')
-		raw = raw.replace(b'{null',b'{"null"')
+	elif is_type == 'json':		
+	# replace 'null' with "null" unless it is in the middle of a word
+            start = raw.find('null')
+            end = start + len('null') -1
+            raw = raw[0:start] + '"null"' + raw[end+1:]
+            
+            if (start != -1):
+                while (start+4 <= len(raw)):
+                    end = start + len('null') - 1
+                    start = raw.find('null', end+1)
+                    if (start == -1):
+                        break
+                    end = start + len('null') - 1
+                    
+                    if (start == 0):
+                        raw = raw[0:start] + '"null"' + raw[end+1:]
+                    elif (end == len(raw)-1):
+                        raw = raw[0:start] + '"null"'
+                        break
+                    else:
+                        if (raw[start-1].isalpha() or raw[end+1].isalpha()):
+                            pass
+                        else: 
+                            raw = raw[0:start] + '"null"' + raw[end+1:]
 
-		return eval(raw)
+            return eval(raw)
+=======
+		return json.loads(json.dumps(xmltodict.parse(raw, process_namespaces=True, 
+														  namespaces={'http://www.loc.gov/mods/v3':None,
+											    				    	 'http://api.lib.harvard.edu/v2/item':None}, 
+											    		  attr_prefix='', 
+											    		  cdata_key='')))
+	elif is_type == 'json':
+		return eval(raw.replace('null','"null"'))
+>>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 
 # CONVERTS A DICT FULL OF UNICODE INTO STRING  ---------------------------------------------------------------------------------------
 def convert(data):
@@ -172,8 +202,17 @@ def merge_clashing_key_vals_into_dict(key,value):
 #########################################################################################################################################
 # MAIN
 #########################################################################################################################################
+<<<<<<< HEAD
 terms       = ['titleInfo.title']
 search_term = sys.argv[1]
+=======
+terms       = ['titleInfo.title', 'subject.topic', 'language.languageTerm', 'physicalDescription.extent']
+search_term = sys.argv[1]
+output_file = search_term + '.txt'
+start       = int(sys.argv[2])
+end         = start + 1
+limit 	    = 1 
+>>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 
 # if user supplies optional argument, provide common terms file
 if len(sys.argv) >= 3:
@@ -190,6 +229,7 @@ limit 	    = 250
     
 # GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
 
+<<<<<<< HEAD
 i = 0
 count_keys = []
 num_records = 0
@@ -247,12 +287,17 @@ while (1):
     for i in range(max):
         row = ''
         for j in range(len(terms)):
-            print(terms[j])
-            term = terms[j][0:-1] #take off newline
+            # take off newline if reading from file
+            # last one doesn't have newline character
+            if ((len(sys.argv) >= 3) and (j != len(terms)-1)):
+                term = terms[j][0:-1]
+            else:
+                term = terms[j]
+                
             if (term in data[i]):
                 row += '"' + data[i][term] + '",'
             else:
-                row += '"",'
+                row += '"",'    
                 
         content += row[:-1] + '\n'
 
@@ -263,14 +308,73 @@ while (1):
 
     start = start + limit
     i = i + 1 
+    print('num_records so far: ' + str(num_records))
     
-    # write all keys to an output file (separate file for getting common keys)
-    count_keys_file = open(search_term + '_keys.csv', 'w') 
+print('number of records per second: ' + str(num_records/(time.time() - start_time)))
     
-    for term in count_keys:
-        count_keys_file.write(str(term))
-        count_keys_file.write("\n")
+################################################################################
+terms_dict = {}
+
+# count the number of times a search term shows up
+for term in count_keys:
+    if term in terms_dict:
+        terms_dict[term] += 1
+    else: 
+        terms_dict[term] = 1
+
+common_terms = []
+
+# if term shows up less than 80% of time add to uncommon terms file
+for term in terms_dict:
+    if ((float(terms_dict[term]) / float(num_records)) >= .8):
+        common_terms.append(term)
+
+# get the unique set of terms                
+common_terms = list(set(common_terms))
+
+# write terms to a file
+common_terms_file = open('common_' + search_term + '_keys.csv', 'w') 
+common_terms_file.write('\n'.join(common_terms))
+common_terms_file.close()      
+
+# run the file again with another input
+=======
+#no start term specified
+if (start == -1):
+    start = 0
+    end = start + 1
+    limit = 2
+    # limit = 1000000000
+
+url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
+raw_json    = get_json_from_url(url,'json')
+data        = json2csv(raw_json['items']['mods'])
+key,value   = assign_key_numbers_to_value(data)
+key,value   = remove_redundent_keyvals(key,value)
+data        = merge_clashing_key_vals_into_dict(key,value)
+
+
+
     
-    count_keys_file.close()
-    
-    print('Number of Records: ' , num_records)
+
+# WRITE TO HEADER  ----------------------------------------------------------------------------------------------------------------------
+content = ''
+#if start == 0:
+header = ''
+for i in range(len(terms)):
+ header += '"' + terms[i] + '",'
+print(header[:-1])
+content += header[:-1]
+ 
+ 
+row = ''
+for i in range(len(terms)):
+ row += '"' + data[terms[i]] + '",'
+print(row[:-1])
+content = row[:-1]
+
+# WRITE DATA  ---------------------------------------------------------------------------------------------------------------------------
+save_file = open(output_file, 'w') #write to output_file (named by search term)
+save_file.write(content)
+save_file.close()
+>>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
