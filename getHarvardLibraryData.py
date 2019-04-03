@@ -9,10 +9,7 @@ import csv
 import collections
 import time
 import requests
-<<<<<<< HEAD
 # from importlib import reload
-=======
->>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 import numpy as np
 import ast
 import sys
@@ -38,20 +35,14 @@ def get_json_from_url(url, is_type='json'):
 	reload(requests)
 	
 	# MAKE A REQUEST
-<<<<<<< HEAD
 	try:
 	   r   = requests.get(url, stream=False, timeout=TIMEOUT)
 	except(requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
 	   return None
-	
-=======
-	r       = requests.get(url, stream=False)
->>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 	raw = r.content
 	
 	# EXTRACT THE JSON
 	if is_type == 'xml':
-<<<<<<< HEAD
 	   return json.loads(json.dumps(xmltodict.parse(raw, 
 		                                             process_namespaces = True, 
 							     namespaces = {'http://www.loc.gov/mods/v3':None,
@@ -84,15 +75,6 @@ def get_json_from_url(url, is_type='json'):
                             raw = raw[0:start] + '"null"' + raw[end+1:]
 
             return eval(raw)
-=======
-		return json.loads(json.dumps(xmltodict.parse(raw, process_namespaces=True, 
-														  namespaces={'http://www.loc.gov/mods/v3':None,
-											    				    	 'http://api.lib.harvard.edu/v2/item':None}, 
-											    		  attr_prefix='', 
-											    		  cdata_key='')))
-	elif is_type == 'json':
-		return eval(raw.replace('null','"null"'))
->>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 
 # CONVERTS A DICT FULL OF UNICODE INTO STRING  ---------------------------------------------------------------------------------------
 def convert(data):
@@ -202,17 +184,8 @@ def merge_clashing_key_vals_into_dict(key,value):
 #########################################################################################################################################
 # MAIN
 #########################################################################################################################################
-<<<<<<< HEAD
 terms       = ['titleInfo.title']
 search_term = sys.argv[1]
-=======
-terms       = ['titleInfo.title', 'subject.topic', 'language.languageTerm', 'physicalDescription.extent']
-search_term = sys.argv[1]
-output_file = search_term + '.txt'
-start       = int(sys.argv[2])
-end         = start + 1
-limit 	    = 1 
->>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c
 
 # if user supplies optional argument, provide common terms file
 if len(sys.argv) >= 3:
@@ -228,8 +201,6 @@ start       = 0
 limit 	    = 250   
     
 # GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
-
-<<<<<<< HEAD
 i = 0
 count_keys = []
 num_records = 0
@@ -338,43 +309,3 @@ common_terms_file.write('\n'.join(common_terms))
 common_terms_file.close()      
 
 # run the file again with another input
-=======
-#no start term specified
-if (start == -1):
-    start = 0
-    end = start + 1
-    limit = 2
-    # limit = 1000000000
-
-url         = 'http://api.lib.harvard.edu/v2/items.json?q='+ search_term + '&start=' + str(start) + '&limit=' + str(limit)
-raw_json    = get_json_from_url(url,'json')
-data        = json2csv(raw_json['items']['mods'])
-key,value   = assign_key_numbers_to_value(data)
-key,value   = remove_redundent_keyvals(key,value)
-data        = merge_clashing_key_vals_into_dict(key,value)
-
-
-
-    
-
-# WRITE TO HEADER  ----------------------------------------------------------------------------------------------------------------------
-content = ''
-#if start == 0:
-header = ''
-for i in range(len(terms)):
- header += '"' + terms[i] + '",'
-print(header[:-1])
-content += header[:-1]
- 
- 
-row = ''
-for i in range(len(terms)):
- row += '"' + data[terms[i]] + '",'
-print(row[:-1])
-content = row[:-1]
-
-# WRITE DATA  ---------------------------------------------------------------------------------------------------------------------------
-save_file = open(output_file, 'w') #write to output_file (named by search term)
-save_file.write(content)
-save_file.close()
->>>>>>> 129c299eced8b6acbf42c1e118cfbfd5b1435f6c

@@ -14,13 +14,9 @@ To install the required packages for the software, please navigate to the root d
         pip install -r requirements.txt
 
 ### Run the Data Extraction
-The python script takes two arguments: (1) search term, (2) result number. For example, to get the first result for the key term 'cat', run:
+The python script takes one argument: (1) search term. For example, to get the result for the key term 'cat', run:
         
-        python getHarvardLibraryData.py 'cat' 0
-
-Or, to get the 5th record for the key term 'dog', run:
-        
-        python getHarvardLibraryData.py 'dog' 4
+        python getHarvardLibraryData.py 'cat'
 
 
 ### What is Returned, and How to Change it?
