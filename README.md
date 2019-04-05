@@ -14,21 +14,19 @@ To install the required packages for the software, please navigate to the root d
         pip install -r requirements.txt
 
 ### Run the Data Extraction
-The python script takes one argument: (1) search term. For example, to get the result for the key term 'cat', run:
+The python script takes one argument: (1) search term. For example, to get the result for the search term 'cat', run:
         
         python getHarvardLibraryData.py 'cat'
 
 
-### What is Returned, and How to Change it?
-The code will return the fields specified in the 'terms' variable of getHarvardLibraryData.py (see line 175-181) in comma seperated variable format (CSV). In this initial commit of the software, the fields are: 
+### What is Returned?
+The initial pass of the code will return the field specified in the 'terms' variable of getHarvardLibraryData.py in comma seperated variable format (CSV). 
+It will also output a CSV wile titiled common_SEARCHTERM_keys.csv that has the 'terms' associated with that search term that occur greater than 80% of the time.
 
-        terms       = ['titleInfo.title',
-		           'name.namePart', 
-			   'subject.topic',
-			   'language.languageTerm',
-			   'physicalDescription.extent', 
-			   'abstract'
-		           ]
+        terms       = ['titleInfo.title'] what is calculated in the initial pass of the code
+
+The second pass of the code takes two arguments: (1) search term. (2) CSV file with common 'terms' titled common_SEARCHTERM_keys.csv
+It will take the CSV file returned from the first pass through and find the records associated with the search term sorted by the 'terms'. 
 
 The terms are based on the raw content that is returned from the harvard library API. For instance https://api.lib.harvard.edu/v2/items.json?q=fish&start=1&limit=1 returns a JSON formatted record from the API when searching for the term 'fish'. When processed by our program, that JSON data is converted into something like this:
 
