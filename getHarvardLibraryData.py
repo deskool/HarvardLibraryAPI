@@ -15,10 +15,6 @@ import ast
 import sys
 import os.path
 
-import time
-start_time = time.time()
-
-
 TIMEOUT = 3
 
 #########################################################################################################################################
@@ -38,7 +34,10 @@ def get_json_from_url(url, is_type='json'):
 	try:
 	   r   = requests.get(url, stream=False, timeout=TIMEOUT)
 	except(requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
-	   return None
+	   try: 
+	       r   = requests.get(url, stream=False, timeout=10)
+	   except:
+	       return None
 	raw = r.content
 	
 	# EXTRACT THE JSON
@@ -281,8 +280,6 @@ while (1):
     i = i + 1 
     print('num_records so far: ' + str(num_records))
     
-print('number of records per second: ' + str(num_records/(time.time() - start_time)))
-    
 ################################################################################
 terms_dict = {}
 
@@ -308,4 +305,4 @@ common_terms_file = open('common_' + search_term + '_keys.csv', 'w')
 common_terms_file.write('\n'.join(common_terms))
 common_terms_file.close()      
 
-# run the file again with another input
+# run the file again with the same search term with the common_SEARCHTERM_keys.csv
