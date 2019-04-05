@@ -186,6 +186,7 @@ def merge_clashing_key_vals_into_dict(key,value):
 terms       = ['titleInfo.title']
 search_term = sys.argv[1]
 
+
 # if user supplies optional argument, provide common terms file
 if len(sys.argv) >= 3:
     terms = []
@@ -306,3 +307,4 @@ common_terms_file.write('\n'.join(common_terms))
 common_terms_file.close()      
 
 # run the file again with the same search term with the common_SEARCHTERM_keys.csv
+
