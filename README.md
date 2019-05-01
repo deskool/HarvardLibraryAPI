@@ -14,19 +14,42 @@ To install the required packages for the software, please navigate to the root d
         pip install -r requirements.txt
 
 ### Run the Data Extraction
-The python script takes one argument: (1) search term. For example, to get the result for the search term 'cat', run:
+The bash script takes one argument: (1) search term. For example, to get the result for the search term 'cat', run:
         
-        python getHarvardLibraryData.py 'cat'
+        ./scrapeHarvardLibraryAPI.sh 'cat'
 
 
 ### What is Returned?
-The initial pass of the code will return the field specified in the 'terms' variable of getHarvardLibraryData.py in comma seperated variable format (CSV). 
-It will also output a CSV wile titiled common_SEARCHTERM_keys.csv that has the 'terms' associated with that search term that occur greater than 80% of the time.
+The code as is will return a folder titled by your search term that contains files in comma separated variable format (CSV) files that make up the data scraped by the Harvard Library API. This will be found in the directory in which you ran your code. It also returns two files titled 'SEARCH_TERM_maxNumRecords.txt' and 'common_SEARCH_TERM_keys.txt'. 
 
-        terms       = ['titleInfo.title'] what is calculated in the initial pass of the code
+When uncommenting these lines of code in the bash script toward the end of the file, 
+	
+	cd $searchTerm
+	cat *.csv >merged.csv
 
-The second pass of the code takes two arguments: (1) search term. (2) CSV file with common 'terms' titled common_SEARCHTERM_keys.csv
-It will take the CSV file returned from the first pass through and find the records associated with the search term sorted by the 'terms'. 
+running the bash script will return what was specified above as well as one file that merges all of the individual CSV files into one large CSV file.
+
+### How the code functions
+
+Running the bash script titled 'scrapeHarvardLibraryAPI.sh' takes in one argument, which is the search term. From there, it passes that argument to the file titled 'numRecords.py', which takes in a search term and a start value. 
+
+If the programmer wishes to change the value at which the code starts, they can change the bash script to take in two arguments and supply the start value to the 'numRecords.py' file such as below.
+
+	searchTerm=$1
+	start=$2
+	python3 ./numRecords.py $searchTerm $start
+
+The programmers have hard coded the start value at 0 and the code takes in one argument such as below.
+
+	searchTerm=$1
+	start=0
+	python3 ./numRecords.py $searchTerm $start
+
+One output of calling 'numRecords.py' is a .txt file titled 'SEARCH_TERM_maxNumRecords.txt' that is a single integer indicating the number of records that the Harvard Library API will return if it is scraped. The file 'SEARCH_TERM_maxNumRecords.txt' is then read in as an integer into the bash script and stored as the max. 
+
+Another output of calling 'numRecords.py' is a .csv file titled 'common_SEARCH_TERM_keys.txt' that scrapes the initial 250 records returned by the Harvard Library API and finds the 'terms' associated with that particular search term that occur greater than 80% of the time. These terms will show up as the header of the final CSV file returned.
+
+	terms       = ['titleInfo.title', 'physicalDescription.form', 'abstract', 'note']
 
 The terms are based on the raw content that is returned from the harvard library API. For instance https://api.lib.harvard.edu/v2/items.json?q=fish&start=1&limit=1 returns a JSON formatted record from the API when searching for the term 'fish'. When processed by our program, that JSON data is converted into something like this:
 
@@ -37,6 +60,9 @@ Inspecting the raw JSON, you will notice that under "items"-->"mods" there is a 
 When the API returns more than one result for a given field request (e.g. name.namePart), those values will be contatenated and separted with a "[\*]". In the case of the earlier example, the code would return:
 
         "[*] Perumal, Santhanam. [*] Pachiappan, Perumal. [*] A.R., Thirunavukkarasu."
+
+Finally, the file 'getHarvardLibraryData.py' is called with the search term, the start, and the common terms fille (common_SEARCH_TERM_keys.txt) as its arguments. It is called to scrape 250 terms at a time, putting each batch of 250 terms into one CSV file into the folder titled by the search term. It is called until it reaches the max, therefore scraping all of the data in the Harvard Library API. 
+
 
 ### Questions?
 Please email me if you have questions about this code, or notice any mistakes.
