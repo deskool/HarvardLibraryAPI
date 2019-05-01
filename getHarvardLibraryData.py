@@ -1,21 +1,15 @@
 # IMPORT THE REQUIRED LIBRARIES
-
-from six.moves import urllib
-
-import xml.etree.ElementTree as ET
 import xmltodict
 import json
-import csv
 import collections
 import time
 import requests
-# from importlib import reload
-import numpy as np
-import ast
+from importlib import reload
 import sys
 import os.path
 
 TIMEOUT = 3
+startTime = time.time()
 
 #########################################################################################################################################
 # DOCUMENTATION
@@ -49,7 +43,8 @@ def get_json_from_url(url, is_type='json'):
 							     attr_prefix = '', 
 							     cdata_key = '')))
 	elif is_type == 'json':		
-	# replace 'null' with "null" unless it is in the middle of a word
+	# replace 'null' with "null" unless it is in the middle of a word 
+            raw = str(raw)
             start = raw.find('null')
             end = start + len('null') -1
             raw = raw[0:start] + '"null"' + raw[end+1:]
@@ -77,7 +72,7 @@ def get_json_from_url(url, is_type='json'):
 
 # CONVERTS A DICT FULL OF UNICODE INTO STRING  ---------------------------------------------------------------------------------------
 def convert(data):
-    if isinstance(data, basestring):
+    if isinstance(data, str):
         return str(data)
     elif isinstance(data, collections.Mapping):
         return dict(map(convert, data.iteritems()))
@@ -180,33 +175,31 @@ def merge_clashing_key_vals_into_dict(key,value):
 				new_data[key[i]] = value[i]
 	return new_data
 
-#########################################################################################################################################
+################################################################################
 # MAIN
-#########################################################################################################################################
+################################################################################
 terms       = ['titleInfo.title']
 search_term = sys.argv[1]
 
 
 # if user supplies optional argument, provide common terms file
-if len(sys.argv) >= 3:
+if len(sys.argv) >= 4:
     terms = []
-    common_terms_file_name = sys.argv[2]
+    common_terms_file_name = sys.argv[3]
     common_terms = open(common_terms_file_name, 'r')
     
     for common_term in common_terms:
         terms.append(common_term)
         
-output_file = search_term + '.csv'
-start       = 0
+output_file = ''
+start       = int(sys.argv[2])
 limit 	    = 250   
     
-# GET THE DATA FROM THE API  ------------------------------------------------------------------------------------------------------------
-i = 0
-count_keys = []
+# GET THE DATA FROM THE API  ---------------------------------------------------
 num_records = 0
 
 while (1):  
-
+    output_file = './' + search_term + '/' + search_term + str(int(start/250)) + '.csv'
     content = ''
     
     # The actual API request, returned as JSON
@@ -214,40 +207,52 @@ while (1):
     
     raw_json    = get_json_from_url(url,'json')
     
-    if raw_json == None or raw_json['items'] == 'null':
-        print('Search complete')
+    # raw_json = json.loads(raw_json)
+    # if raw_json == None or raw_json['items'] == 'null':
+    #     print('Search complete')
+    #     break
+    
+    if raw_json == None:
+        print('Search yielded no results')
+        break
+    
+    raw_json = json.loads(raw_json)
+        
+    if raw_json['items'] == 'null':
+        print('Search yielded no results')
         break
     
     # counts the number of returned records    
     mods = raw_json['items']['mods']
-    max = len(mods)
+    maxLen = len(mods)
     
     #Process/clean up the data
     data = {}
-    for i in range (max): 
-        datai = json2csv(raw_json['items']['mods'][i])
-        data[i] = datai
+    for j in range (maxLen): 
+        dataj = json2csv(raw_json['items']['mods'][j])
+        data[j] = dataj
     
-    for i in range (max):  
-        key,value   = assign_key_numbers_to_value(data[i])
+    for j in range (maxLen):  
+        key,value   = assign_key_numbers_to_value(data[j])
         
         num_records += 1
         
-        # add the terms of each record to count_keys
-        for term in key:
-            count_keys.append(term)
+        # # add the terms of each record to count_keys
+        # for term in key:
+        #     count_keys.append(term)
              
         key,value   = remove_redundent_keyvals(key,value)
-        data[i]     = merge_clashing_key_vals_into_dict(key,value)
-
+        data[j]     = merge_clashing_key_vals_into_dict(key,value)
+    
     # Write the header to the CSV file
-    if start == 0:
+    if start % 250 == 0:
         
         # replace CSV file upon new search
         try:
             os.remove(output_file)
         except:
-            print('file did not previously exist')
+            
+            ('file did not previously exist')
         
         header = ''
         for i in range(len(terms)):
@@ -255,7 +260,7 @@ while (1):
         content += header[:-1] + '\n'
 
     # Writing the data to the CSV file
-    for i in range(max):
+    for i in range(maxLen):
         row = ''
         for j in range(len(terms)):
             # take off newline if reading from file
@@ -271,40 +276,12 @@ while (1):
                 row += '"",'    
                 
         content += row[:-1] + '\n'
-
-    #write to output_file (named by search term)
-    save_file = open(output_file, 'a') 
+    
+    # write to output_file (named by search term and i)
+    save_file = open(output_file, 'w')  
     save_file.write(content)
     save_file.close()
-
-    start = start + limit
-    i = i + 1 
-    print('num_records so far: ' + str(num_records))
     
-################################################################################
-terms_dict = {}
-
-# count the number of times a search term shows up
-for term in count_keys:
-    if term in terms_dict:
-        terms_dict[term] += 1
-    else: 
-        terms_dict[term] = 1
-
-common_terms = []
-
-# if term shows up less than 80% of time add to uncommon terms file
-for term in terms_dict:
-    if ((float(terms_dict[term]) / float(num_records)) >= .8):
-        common_terms.append(term)
-
-# get the unique set of terms                
-common_terms = list(set(common_terms))
-
-# write terms to a file
-common_terms_file = open('common_' + search_term + '_keys.csv', 'w') 
-common_terms_file.write('\n'.join(common_terms))
-common_terms_file.close()      
-
-# run the file again with the same search term with the common_SEARCHTERM_keys.csv
-
+    print('num_records so far: ' + str(num_records))
+    print('seconds per record: ' + str((time.time() - startTime)/num_records))
+    break
